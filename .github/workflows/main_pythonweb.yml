@@ -1,8 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
-# More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - pythonweb
+name: Build and deploy PHP app to Azure Web App - pythonweb
 
 on:
   push:
@@ -19,31 +18,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python version
-        uses: actions/setup-python@v5
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          python-version: '3.12'
+          php-version: '8.3'
 
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-      
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-        
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+      - name: Check if composer.json exists
+        id: check_files
+        uses: andstor/file-existence-action@v1
+        with:
+          files: 'composer.json'
+
+      - name: Run composer install if composer.json exists
+        if: steps.check_files.outputs.files_exists == 'true'
+        run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
 
-      - name: Upload artifact for deployment jobs
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: python-app
-          path: |
-            release.zip
-            !venv/
+          name: php-app
+          path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -59,18 +56,17 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: python-app
+          name: php-app
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
-
       
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_55EBE2467BA543E3833A5DBB3DB0A9A6 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A331101E0C764A9FB8C216832A938C34 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_330A4D083446476A819EF2942A40F983 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_49716C3A215843159A31FA7F1E7594FA }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_AA36D61F663D482CAA5D06088399D6BC }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_19800ED6FFB84A3C85695C3A01ADEDDE }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -78,4 +74,5 @@ jobs:
         with:
           app-name: 'pythonweb'
           slot-name: 'Production'
+          package: .
           
