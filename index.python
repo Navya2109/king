@@ -1,0 +1,141 @@
+from datetime import date
+from typing import List, Dict
+
+class Participant:
+    def __init__(self, participant_id: int, name: str, age: int, location: str):
+        self.participant_id = participant_id
+        self.name = name
+        self.age = age
+        self.location = location
+        self.enrolled_programs = []
+
+class Program:
+    def __init__(self, program_id: int, name: str, program_type: str, start_date: date, end_date: date):
+        self.program_id = program_id
+        self.name = name
+        self.program_type = program_type  # e.g., "Education", "Livelihood Training"
+        self.start_date = start_date
+        self.end_date = end_date
+        self.participants = []
+        self.mentors = []
+
+class Mentor:
+    def __init__(self, mentor_id: int, name: str, expertise: str, years_experience: int):
+        self.mentor_id = mentor_id
+        self.name = name
+        self.expertise = expertise
+        self.years_experience = years_experience
+
+class Donation:
+    def __init__(self, donation_id: int, donor_name: str, amount: float, donation_date: date, purpose: str):
+        self.donation_id = donation_id
+        self.donator_name = donor_name
+        self.amount = amount
+        self.donation_date = donation_date
+        self.purpose = purpose
+
+class MagicBusFoundation:
+    def __init__(self):
+        self.participants: List[Participant] = []
+        self.programs: List[Program] = []
+        self.mentors: List[Mentor] = []
+        self.donations: List[Donation] = []
+        self.program_counter = 0
+        self.participant_counter = 0
+        self.donation_counter = 0
+        self.mentor_counter = 0
+
+    def add_participant(self, name: str, age: int, location: str) -> Participant:
+        self.participant_counter += 1
+        new_participant = Participant(self.participant_counter, name, age, location)
+        self.participants.append(new_participant)
+        return new_participant
+
+    def create_program(self, name: str, program_type: str, start_date: date, end_date: date) -> Program:
+        self.program_counter += 1
+        new_program = Program(self.program_counter, name, program_type, start_date, end_date)
+        self.programs.append(new_program)
+        return new_program
+
+    def enroll_participant(self, participant_id: int, program_id: int) -> bool:
+        participant = next((p for p in self.participants if p.participant_id == participant_id), None)
+        program = next((p for p in self.programs if p.program_id == program_id), None)
+        
+        if participant and program:
+            program.participants.append(participant)
+            participant.enrolled_programs.append(program)
+            return True
+        return False
+
+    def add_mentor(self, name: str, expertise: str, years_experience: int) -> Mentor:
+        self.mentor_counter += 1
+        new_mentor = Mentor(self.mentor_counter, name, expertise, years_experience)
+        self.mentors.append(new_mentor)
+        return new_mentor
+
+    def assign_mentor_to_program(self, mentor_id: int, program_id: int) -> bool:
+        mentor = next((m for m in self.mentors if m.mentor_id == mentor_id), None)
+        program = next((p for p in self.programs if p.program_id == program_id), None)
+        
+        if mentor and program:
+            program.mentors.append(mentor)
+            return True
+        return False
+
+    def record_donation(self, donor_name: str, amount: float, donation_date: date, purpose: str) -> Donation:
+        self.donation_counter += 1
+        new_donation = Donation(self.donation_counter, donor_name, amount, donation_date, purpose)
+        self.donations.append(new_donation)
+        return new_donation
+
+    def get_program_report(self, program_id: int) -> Dict:
+        program = next((p for p in self.programs if p.program_id == program_id), None)
+        if not program:
+            return {}
+            
+        return {
+            "program_name": program.name,
+            "participants_count": len(program.participants),
+            "mentors_count": len(program.mentors),
+            "duration_days": (program.end_date - program.start_date).days
+        }
+
+    def get_donation_summary(self) -> Dict:
+        total = sum(d.amount for d in self.donations)
+        return {
+            "total_donations": total,
+            "donation_count": len(self.donations),
+            "average_donation": total / len(self.donations) if self.donations else 0
+        }
+
+# Example Usage
+if __name__ == "__main__":
+    foundation = MagicBusFoundation()
+
+    # Add participants
+    participant1 = foundation.add_participant("Rahul Sharma", 14, "Mumbai")
+    participant2 = foundation.add_participant("Priya Singh", 16, "Delhi")
+
+    # Create program
+    program = foundation.create_program(
+        "Digital Literacy Program",
+        "Education",
+        date(2024, 6, 1),
+        date(2024, 12, 31)
+    )
+
+    # Enroll participants
+    foundation.enroll_participant(participant1.participant_id, program.program_id)
+    foundation.enroll_participant(participant2.participant_id, program.program_id)
+
+    # Add mentor
+    mentor = foundation.add_mentor("Anjali Mehta", "Computer Education", 5)
+    foundation.assign_mentor_to_program(mentor.mentor_id, program.program_id)
+
+    # Record donations
+    foundation.record_donation("Tech Corp Inc", 5000.00, date.today(), "Digital Literacy Program")
+    foundation.record_donation("Community Donor", 1000.00, date.today(), "General Fund")
+
+    # Generate reports
+    print("Program Report:", foundation.get_program_report(program.program_id))
+    print("Donation Summary:", foundation.get_donation_summary())
